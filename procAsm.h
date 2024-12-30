@@ -20,14 +20,15 @@ size_t asembler(SPU* spu);
 size_t*        getFileSize     (const char* name_file);
 char*          readFileToBuffer(FILE* file, size_t size_file);
 int            searchRegister  (ARG_RECOGNIZER arg);
+int            ipMove          (char command_recognizer[]);
 void           defineLabel     (SPU* spu, char command_recognizer[]);
 ARG_RECOGNIZER argInit         (char* argument_recognizer);
 bool           checkArg        (ARG_RECOGNIZER arg);
 bool           searchLabel     (SPU* spu, char* buffer, char argument_recognizer[], int* i, int t_1);
-void           createComment   (int* i, char command_recognizer[]);
 void           createLabel     (SPU* spu, int* i, char command_recognizer[]);
 void           sintaxError     (int num);
 void           addLabel        (SPU* spu, char command_recognizer[], size_t len);
+void           findLabel       (SPU* spu, char* buffer, int* i, char command_recognizer[]);
 
 
     

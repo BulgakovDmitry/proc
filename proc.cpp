@@ -309,6 +309,6 @@ void printDebug(int ind)
 void jump (SPU* spu)
 {
     assert(spu);
-    spu->ip = (int)spu->code[spu->ip+1];
+    spu->ip = (int)spu->code[spu->ip+1] - JUMP_STEP;
 }
 

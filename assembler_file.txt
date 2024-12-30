@@ -1,10 +1,12 @@
-push 6
 start:
-push 1
-add
 push 5
-point:
-;dump
-je start
+push 4
+ja metk
+push 7
+end:
+dump
+hlt
+metk:
+push 21
 dump
 hlt
