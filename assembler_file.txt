@@ -1,0 +1,10 @@
+push 6
+start:
+push 1
+add
+push 5
+point:
+;dump
+je start
+dump
+hlt
