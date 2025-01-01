@@ -1,14 +1,21 @@
 push 4
 push 3
 call function
-push 8
+push 112
+push 9
+pop cx
+call cmdPush
 dump
 hlt
-
-
 function:
 push 200
 push 300
 push 400
 ret
-
+cmdPush:
+push cx
+push cx
+push cx
+pop dx
+pop ex
+ret
