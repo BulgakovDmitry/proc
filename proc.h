@@ -10,6 +10,7 @@ const int    N_LABELS       = 10;
 const int    MAX_LABEL_SIZE = 40;
 const int    RAM_SIZE       = 100;
 const int    JUMP_STEP      = 2;
+const int    BAD_ARG        = -1;
 const double NUMBER_OF_REGISTERS = 8;
 
 enum ComputingCommands
@@ -38,6 +39,8 @@ enum ComputingCommands
     COMMAND_COS   = 111,
     COMMAND_TG    = 112,
     COMMAND_CTG   = 113,
+    COMMAND_CALL  = 150,
+    COMMAND_RET   = 151,
 };
 
 enum ArgTypes 
@@ -71,6 +74,7 @@ struct SPU
     double* code;
     int     ip;
     Stack_t stk;
+    Stack_t recStk;
     double* registers;
     double* ram;
     Labels* lb;

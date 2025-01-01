@@ -1,5 +1,5 @@
 #ifndef PROC_ASSM_H
-#define PROC_ASSM_H\
+#define PROC_ASSM_H
 
 #include "proc.h"
 #include <stdlib.h>
@@ -11,6 +11,8 @@
 
 #define FCLOSE(ptr_) \
     do {fclose(ptr_); ptr_ = NULL;} while(false)
+
+const int SPACE = 1;
 
 struct CMD_ARRAY      {const char* cmd_array;};
 struct ARG_RECOGNIZER {int a, b, c, d, e, f, g, h;};

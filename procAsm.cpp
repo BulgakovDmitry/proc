@@ -5,7 +5,7 @@
     {                                                                            \
         spu->code[spu->ip] = constNameCommand;                                   \
         spu->ip++;                                                               \
-        i += t_0;                                                                \
+        i += t_0 + SPACE;                                                        \
         continue;                                                                \
     }
 
@@ -14,7 +14,7 @@
     {                                                                            \
         spu->code[spu->ip] = constNameCommand;                                   \
         spu->ip++;                                                               \
-        i += t_0;                                                                \
+        i += t_0 + SPACE;                                                        \
         char argument_recognizer[MAX_LABEL_SIZE] = "";                           \
         int t_1 = 0;                                                             \
         sscanf(buffer + i, "%s%n", argument_recognizer, &t_1);                   \
@@ -22,7 +22,7 @@
         {                                                                        \
             spu->code[spu->ip] = atoi(argument_recognizer);                      \
             spu->ip++;                                                           \
-            i += t_1 + 1;                                                        \
+            i += t_1 + SPACE;                                                    \
         }                                                                        \
         else                                                                     \
         {                                                                        \
@@ -52,23 +52,9 @@ size_t asembler(SPU* spu)
 
     char command_recognizer[10] = "";
     int i = 0;  
-    /*
-    while (buffer[i] != '\0')
-    {   
-        sscanf(buffer + i, "%s", command_recognizer);
-        size_t command_recognizer_len = strlen(command_recognizer);
 
-        spu->ip += ipMove(command_recognizer);
-
-        if (command_recognizer[command_recognizer_len - 1] == ':')
-        {
-            addLabel(spu, command_recognizer, command_recognizer_len);
-            i += command_recognizer_len + 1;
-        }
-        else    
-            i += command_recognizer_len + 1;
-    }*/
     findLabel(spu, buffer, &i, command_recognizer);
+
     i = 0;
     spu->ip = 0;
 
@@ -80,7 +66,7 @@ size_t asembler(SPU* spu)
         {
             spu->code[spu->ip] = COMMAND_PUSH; 
             spu->ip++;
-            i += t_0 + 1;
+            i += t_0 + SPACE;
 
             char argument_recognizer[3] = ""; 
             int t_1 = 0;
@@ -94,16 +80,16 @@ size_t asembler(SPU* spu)
                 sscanf(argument_recognizer, "%d%n", &argument, &t_1);
                 spu->code[spu->ip] = ARGTYPE_I; 
                 spu->ip++;
-                i+= 1;
+                i += SPACE;
 
                 spu->code[spu->ip] = argument; 
                 spu->ip++;
-                i+= t_1;
+                i += t_1;
                 continue;
             }
             else 
             {
-                i+= 3;
+                i += 3;
                 int registr = searchRegister(arg);
                 spu->code[spu->ip] = ARGTYPE_R;
                 spu->ip++;
@@ -117,7 +103,7 @@ size_t asembler(SPU* spu)
         {
             spu->code[spu->ip] = COMMAND_POP; 
             spu->ip++;
-            i += t_0 + 1;
+            i += t_0 + SPACE;
 
             char argument_recognizer[3] = ""; 
             int t_1 = 0;
@@ -131,11 +117,11 @@ size_t asembler(SPU* spu)
                 sscanf(argument_recognizer, "%d%n", &argument, &t_1);
                 spu->code[spu->ip] = ARGTYPE_I; 
                 spu->ip++;
-                i+= 1;
+                i += SPACE;
 
                 spu->code[spu->ip] = argument; 
                 spu->ip++;
-                i+= t_1;
+                i += t_1;
                 continue;
             }
             else 
@@ -165,7 +151,9 @@ size_t asembler(SPU* spu)
         ONE_ARGUMENT_COMMAND("cos",   COMMAND_COS  )
         ONE_ARGUMENT_COMMAND("tg",    COMMAND_TG   )
         ONE_ARGUMENT_COMMAND("ctg",   COMMAND_CTG  )
+        ONE_ARGUMENT_COMMAND("ret",   COMMAND_RET  )
         
+        JUMP_TYPE_COMMAND("call", COMMAND_CALL)
         JUMP_TYPE_COMMAND("jmp", COMMAND_JMP)  
         JUMP_TYPE_COMMAND("ja",  COMMAND_JA )
         JUMP_TYPE_COMMAND("jb",  COMMAND_JB )
@@ -274,14 +262,13 @@ void findLabel(SPU* spu, char* buffer, int* i, char command_recognizer[])
         size_t command_recognizer_len = strlen(command_recognizer);
 
         spu->ip += ipMove(command_recognizer);
-
         if (command_recognizer[command_recognizer_len - 1] == ':')
         {
             addLabel(spu, command_recognizer, command_recognizer_len);
-            (*i) += command_recognizer_len + 1;
+            (*i) += command_recognizer_len + SPACE;
         }
         else    
-            (*i) += command_recognizer_len + 1;
+            (*i) += command_recognizer_len + SPACE;
     }
 }
 
@@ -292,7 +279,7 @@ void addLabel(SPU* spu, char command_recognizer[], size_t len)
 
     command_recognizer[len - 1] = '\0';  // СТИРАНИЕ ДВОЕТОЧИЯ ИЗ НАЗВАНИЯ МЕТКИ
     spu->lb[spu->labelCounter].nameLabel = strdup(command_recognizer);
-    spu->lb[spu->labelCounter].ipLabel = spu->ip /*- 2*/;
+    spu->lb[spu->labelCounter].ipLabel = spu->ip + 1;
     spu->labelCounter++;
 }
 
@@ -340,7 +327,7 @@ bool searchLabel(SPU* spu, char* buffer, char argument_recognizer[], int* i, int
             spu->code[spu->ip] = spu->lb[y].ipLabel;
             spu->ip++;
             metka = true;
-            (*i) += t_1 + 1;
+            (*i) += t_1 + SPACE;
             continue;
         }
     }
@@ -365,6 +352,7 @@ int ipMove(char command_recognizer[])
     if (strcmp(command_recognizer, "in"   ) == 0) ip += 1;
     if (strcmp(command_recognizer, "sin"  ) == 0) ip += 1;
     if (strcmp(command_recognizer, "cos"  ) == 0) ip += 1;
+    if (strcmp(command_recognizer, "ret"  ) == 0) ip += 1;
     if (strcmp(command_recognizer, "jmp"  ) == 0) ip += 2;
     if (strcmp(command_recognizer, "ja"   ) == 0) ip += 2;
     if (strcmp(command_recognizer, "jb"   ) == 0) ip += 2;
@@ -372,6 +360,7 @@ int ipMove(char command_recognizer[])
     if (strcmp(command_recognizer, "jbe"  ) == 0) ip += 2;
     if (strcmp(command_recognizer, "je"   ) == 0) ip += 2;
     if (strcmp(command_recognizer, "jhe"  ) == 0) ip += 2;
+    if (strcmp(command_recognizer, "call" ) == 0) ip += 2;
 
     return ip;
 }

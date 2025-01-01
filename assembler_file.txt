@@ -1,12 +1,15 @@
-start:
-push 5
 push 4
-ja metk
-push 7
-end:
+push 3
+call point
+push 8
 dump
 hlt
-metk:
-push 21
-dump
-hlt
+
+
+
+point:
+push 200
+push 300
+push 400
+ret
+
