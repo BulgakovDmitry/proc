@@ -54,7 +54,8 @@ size_t asembler(SPU* spu)
     int i = 0;  
 
     findLabel(spu, buffer, &i, command_recognizer);
-
+    //pDump(*spu);
+    //abort();
     i = 0;
     spu->ip = 0;
 
@@ -137,30 +138,30 @@ size_t asembler(SPU* spu)
             
         }
 
-        ONE_ARGUMENT_COMMAND("hlt",   COMMAND_HLT  )
-        ONE_ARGUMENT_COMMAND("dump",  COMMAND_DUMP )
+        ONE_ARGUMENT_COMMAND("hlt"  , COMMAND_HLT  )
+        ONE_ARGUMENT_COMMAND("dump" , COMMAND_DUMP )
         ONE_ARGUMENT_COMMAND("sdump", COMMAND_SDUMP)
-        ONE_ARGUMENT_COMMAND("add",   COMMAND_ADD  )
-        ONE_ARGUMENT_COMMAND("sub",   COMMAND_SUB  )
-        ONE_ARGUMENT_COMMAND("mul",   COMMAND_MUL  )
-        ONE_ARGUMENT_COMMAND("div",   COMMAND_DIV  )
-        ONE_ARGUMENT_COMMAND("sqrt",  COMMAND_SQRT )
-        ONE_ARGUMENT_COMMAND("out",   COMMAND_OUT  )
-        ONE_ARGUMENT_COMMAND("in",    COMMAND_IN   )
-        ONE_ARGUMENT_COMMAND("sin",   COMMAND_SIN  )
-        ONE_ARGUMENT_COMMAND("cos",   COMMAND_COS  )
-        ONE_ARGUMENT_COMMAND("tg",    COMMAND_TG   )
-        ONE_ARGUMENT_COMMAND("ctg",   COMMAND_CTG  )
-        ONE_ARGUMENT_COMMAND("ret",   COMMAND_RET  )
+        ONE_ARGUMENT_COMMAND("add"  , COMMAND_ADD  )
+        ONE_ARGUMENT_COMMAND("sub"  , COMMAND_SUB  )
+        ONE_ARGUMENT_COMMAND("mul"  , COMMAND_MUL  )
+        ONE_ARGUMENT_COMMAND("div"  , COMMAND_DIV  )
+        ONE_ARGUMENT_COMMAND("sqrt" , COMMAND_SQRT )
+        ONE_ARGUMENT_COMMAND("out"  , COMMAND_OUT  )
+        ONE_ARGUMENT_COMMAND("in"   , COMMAND_IN   )
+        ONE_ARGUMENT_COMMAND("sin"  , COMMAND_SIN  )
+        ONE_ARGUMENT_COMMAND("cos"  , COMMAND_COS  )
+        ONE_ARGUMENT_COMMAND("tg"   , COMMAND_TG   )
+        ONE_ARGUMENT_COMMAND("ctg"  , COMMAND_CTG  )
+        ONE_ARGUMENT_COMMAND("ret"  , COMMAND_RET  )
         
         JUMP_TYPE_COMMAND("call", COMMAND_CALL)
-        JUMP_TYPE_COMMAND("jmp", COMMAND_JMP)  
-        JUMP_TYPE_COMMAND("ja",  COMMAND_JA )
-        JUMP_TYPE_COMMAND("jb",  COMMAND_JB )
-        JUMP_TYPE_COMMAND("jae", COMMAND_JAE)
-        JUMP_TYPE_COMMAND("jbe", COMMAND_JBE)
-        JUMP_TYPE_COMMAND("je",  COMMAND_JE )
-        JUMP_TYPE_COMMAND("jhe", COMMAND_JHE)
+        JUMP_TYPE_COMMAND("jmp" , COMMAND_JMP )  
+        JUMP_TYPE_COMMAND("ja"  , COMMAND_JA  )
+        JUMP_TYPE_COMMAND("jb"  , COMMAND_JB  )
+        JUMP_TYPE_COMMAND("jae" , COMMAND_JAE )
+        JUMP_TYPE_COMMAND("jbe" , COMMAND_JBE )
+        JUMP_TYPE_COMMAND("je"  , COMMAND_JE  )
+        JUMP_TYPE_COMMAND("jhe" , COMMAND_JHE )
 
         else 
         {
@@ -262,8 +263,11 @@ void findLabel(SPU* spu, char* buffer, int* i, char command_recognizer[])
         size_t command_recognizer_len = strlen(command_recognizer);
 
         spu->ip += ipMove(command_recognizer);
+        //printf(MANG "command_recognizer = %s\n" RESET, command_recognizer);
+        //printf(GREEN "command_recognizer[command_recognizer_len - 1] = %c\n" RESET, command_recognizer[command_recognizer_len - 1]);
         if (command_recognizer[command_recognizer_len - 1] == ':')
         {
+            //printf(YELLOW "ADD LABEL %s\n" RESET, command_recognizer);
             addLabel(spu, command_recognizer, command_recognizer_len);
             (*i) += command_recognizer_len + SPACE;
         }
