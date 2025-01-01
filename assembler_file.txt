@@ -1,13 +1,12 @@
 push 4
 push 3
-call point
+call function
 push 8
 dump
 hlt
 
 
-
-point:
+function:
 push 200
 push 300
 push 400

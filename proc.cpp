@@ -61,11 +61,11 @@ int run(SPU* spu, size_t size_file)
             }
 
             case COMMAND_JMP:  JUMP_COMMON(spu, 0, ==);
-            case COMMAND_JA:   JUMP_COMMON(spu, 1, >);
-            case COMMAND_JB:   JUMP_COMMON(spu, 1, <);
+            case COMMAND_JA :  JUMP_COMMON(spu, 1, > );
+            case COMMAND_JB :  JUMP_COMMON(spu, 1, < );
             case COMMAND_JAE:  JUMP_COMMON(spu, 1, >=);
             case COMMAND_JBE:  JUMP_COMMON(spu, 1, <=);
-            case COMMAND_JE:   JUMP_COMMON(spu, 1, ==);
+            case COMMAND_JE :  JUMP_COMMON(spu, 1, ==);
             case COMMAND_JHE:  JUMP_COMMON(spu, 1, !=);
 
             case COMMAND_CALL:
