@@ -8,9 +8,9 @@
 
 const int    N_LABELS       = 10;
 const int    MAX_LABEL_SIZE = 40;
-const int    RAM_SIZE       = 100;
+const int    RAM_SIZE       = 30;
 const int    JUMP_STEP      = 2;
-const int    BAD_ARG        = -1;
+const int    BAD_ARG        = 0;
 const double NUMBER_OF_REGISTERS = 8;
 
 enum ComputingCommands

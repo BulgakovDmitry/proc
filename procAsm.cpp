@@ -63,6 +63,7 @@ size_t asembler(SPU* spu)
     {   
         int t_0 = 0;
         sscanf(buffer + i, "%s%n", command_recognizer, &t_0);
+
         if (strcmp(command_recognizer, "push") == 0)
         {
             spu->code[spu->ip] = COMMAND_PUSH; 
@@ -75,27 +76,19 @@ size_t asembler(SPU* spu)
             sscanf(buffer + i, "%s%n", argument_recognizer, &t_1);
             ARG_RECOGNIZER arg = argInit(argument_recognizer);
 
-            if (checkArg(arg))
+            if (argument_recognizer[0] == '[')
             {
-                int argument = 0;
-                sscanf(argument_recognizer, "%d%n", &argument, &t_1);
-                spu->code[spu->ip] = ARGTYPE_I; 
-                spu->ip++;
-                i += SPACE;
-
-                spu->code[spu->ip] = argument; 
-                spu->ip++;
-                i += t_1;
+                workWithRAM(spu, argument_recognizer, &i, t_1);
+                continue;
+            }
+            else if (checkArg(arg))
+            {
+                workWithNum(spu, argument_recognizer, &i, &t_1);
                 continue;
             }
             else 
             {
-                i += 3;
-                int registr = searchRegister(arg);
-                spu->code[spu->ip] = ARGTYPE_R;
-                spu->ip++;
-                spu->code[spu->ip] = registr;
-                spu->ip++;
+                workWithReg(spu, &i, arg);
                 continue;
             }
         }    
@@ -112,33 +105,26 @@ size_t asembler(SPU* spu)
             sscanf(buffer + i, "%s%n", argument_recognizer, &t_1);
             ARG_RECOGNIZER arg = argInit(argument_recognizer);
 
-            if (checkArg(arg))
+            if (argument_recognizer[0] == '[')
             {
-                int argument = 0;
-                sscanf(argument_recognizer, "%d%n", &argument, &t_1);
-                spu->code[spu->ip] = ARGTYPE_I; 
-                spu->ip++;
-                i += SPACE;
-
-                spu->code[spu->ip] = argument; 
-                spu->ip++;
-                i += t_1;
+                workWithRAM(spu, argument_recognizer, &i, t_1);
                 continue;
             }
             else 
             {
-                i+= 3;
-                int registr = searchRegister(arg);
-                spu->code[spu->ip] = ARGTYPE_R;
-                spu->ip++;
-                spu->code[spu->ip] = registr;
-                spu->ip++;
+                workWithReg(spu, &i, arg);
                 continue;
-            }
-            
+            }   
         }
 
-        ONE_ARGUMENT_COMMAND("hlt"  , COMMAND_HLT  )
+        else if (strncmp(command_recognizer, "hlt", 3) == 0)                         \
+        {                                                                            \
+            spu->code[spu->ip] = COMMAND_HLT;                                        \
+            spu->ip++;                                                               \
+            i += t_0 + SPACE;                                                        \
+            continue;                                                                \
+        }
+
         ONE_ARGUMENT_COMMAND("dump" , COMMAND_DUMP )
         ONE_ARGUMENT_COMMAND("sdump", COMMAND_SDUMP)
         ONE_ARGUMENT_COMMAND("add"  , COMMAND_ADD  )
@@ -367,4 +353,65 @@ int ipMove(char command_recognizer[])
     if (strcmp(command_recognizer, "call" ) == 0) ip += 2;
 
     return ip;
+}
+
+void workWithRAM(SPU* spu, char argument_recognizer[], int* i, int t_1)
+{
+    assert(spu);
+    assert(argument_recognizer);
+    (*i)++;
+    spu->code[spu->ip] = ARGTYPE_M;
+    spu->ip++;
+    argument_recognizer[t_1 - 1] = '\0';
+    if (!isalpha(argument_recognizer[1]))
+    {
+        double argument = atoi(argument_recognizer + 1);
+
+        if (argument >= RAM_SIZE || argument < 0)
+            sintaxError(6);
+        
+        spu->code[spu->ip] = argument;
+        spu->ip++;
+
+        (*i) += t_1;
+    }
+    else
+    {
+        spu->code[spu->ip - 1] += ARGTYPE_R;
+        ARG_RECOGNIZER argRam = argInit(argument_recognizer + 1);
+        int registr = searchRegister(argRam);
+
+        if (!registr)
+            sintaxError(8);
+
+        spu->code[spu->ip] = registr;
+        spu->ip++;
+        (*i) += t_1;
+    }
+}
+
+void workWithReg(SPU* spu, int* i, ARG_RECOGNIZER arg)
+{
+    assert(spu);
+    (*i) += 3;
+    int registr = searchRegister(arg);
+    spu->code[spu->ip] = ARGTYPE_R;
+    spu->ip++;
+    spu->code[spu->ip] = registr;
+    spu->ip++;
+}
+
+void workWithNum(SPU* spu, char argument_recognizer[], int* i, int* t_1)
+{
+    assert(spu);
+    assert(argument_recognizer);
+
+    int argument = 0;
+    sscanf(argument_recognizer, "%d%n", &argument, t_1);
+    spu->code[spu->ip] = ARGTYPE_I; 
+    spu->ip++;
+    (*i) += SPACE;
+    spu->code[spu->ip] = argument; 
+    spu->ip++;
+    (*i) += (*t_1);
 }

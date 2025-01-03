@@ -31,6 +31,12 @@ void           createLabel     (SPU* spu, int* i, char command_recognizer[]);
 void           sintaxError     (int num);
 void           addLabel        (SPU* spu, char command_recognizer[], size_t len);
 void           findLabel       (SPU* spu, char* buffer, int* i, char command_recognizer[]);
+void           workWithRAM     (SPU* spu, char argument_recognizer[], int* i, int t_1);
+void           workWithReg     (SPU* spu, int* i, ARG_RECOGNIZER arg);
+void           workWithNum     (SPU* spu, char argument_recognizer[], int* i, int* t_1);
+
+
+
 
 
     

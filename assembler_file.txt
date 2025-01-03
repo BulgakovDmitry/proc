@@ -1,27 +1,7 @@
-in
-pop ax
-push ax
+push 2
 pop bx
-call fact
-push bx
-out
+push 123
+pop [bx]
+push [bx]
+dump
 hlt
-fact:
-push ax
-push 1
-je end
-push bx
-push ax
-call decrease
-mul
-pop bx
-push ax
-call decrease
-pop ax
-call fact
-end:
-ret
-decrease:
-push 1
-sub
-ret

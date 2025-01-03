@@ -6,9 +6,8 @@
         assert(spu);                        \
         if (!flagCond)                      \
         {                                   \
-            printDebug(0);                  \
             jump(spu);                      \
-            spu->ip --/*+= 2*/;                   \
+            spu->ip--;                      \
             break;                          \
         }                                   \
         else                                \
@@ -17,22 +16,19 @@
             double b = StackPop(&spu->stk); \
             StackPush(&spu->stk, b);        \
             StackPush(&spu->stk, a);        \
-            printDebug(1);                  \
             if (int(b) codeOp int(a))       \
             {                               \
-                printDebug(9);              \
                 jump(spu);                  \
-                spu->ip --;                  \
+                spu->ip --;                 \
             }                               \
             else                            \
             {                               \
-                printDebug(99);             \
                 spu->ip += 2;               \
             }                               \
             break;                          \
         }                                   \
     }                                                                  
-  
+
 int run(SPU* spu, size_t size_file)
 {
     double command = 0;
@@ -59,15 +55,13 @@ int run(SPU* spu, size_t size_file)
                 getArgPop(spu);
                 break;
             }
-
-            case COMMAND_JMP:  JUMP_COMMON(spu, 0, ==);
-            case COMMAND_JA :  JUMP_COMMON(spu, 1, > );
-            case COMMAND_JB :  JUMP_COMMON(spu, 1, < );
-            case COMMAND_JAE:  JUMP_COMMON(spu, 1, >=);
-            case COMMAND_JBE:  JUMP_COMMON(spu, 1, <=);
-            case COMMAND_JE :  JUMP_COMMON(spu, 1, ==);
-            case COMMAND_JHE:  JUMP_COMMON(spu, 1, !=);
-
+            case COMMAND_JMP :  JUMP_COMMON(spu, 0, ==);
+            case COMMAND_JA  :  JUMP_COMMON(spu, 1, > );
+            case COMMAND_JB  :  JUMP_COMMON(spu, 1, < );
+            case COMMAND_JAE :  JUMP_COMMON(spu, 1, >=);
+            case COMMAND_JBE :  JUMP_COMMON(spu, 1, <=);
+            case COMMAND_JE  :  JUMP_COMMON(spu, 1, ==);
+            case COMMAND_JHE :  JUMP_COMMON(spu, 1, !=);
             case COMMAND_CALL:
             {
                 StackPush(&spu->recStk, spu->ip + JUMP_STEP);
@@ -75,7 +69,6 @@ int run(SPU* spu, size_t size_file)
                 spu->ip--;
                 break;
             }
-
             case COMMAND_RET:
             {
                 spu->ip = (int)StackPop(&spu->recStk);
@@ -92,7 +85,7 @@ int run(SPU* spu, size_t size_file)
             case COMMAND_ADD:
             {
                 PairOfNum pair = getPairOfNumbersFromStack(spu);
-                StackPush(&spu->stk, pair.a + pair.b);
+                StackPush(&spu->stk, pair.b + pair.a);
                 spu->ip++;
                 break;
             }
@@ -197,7 +190,7 @@ int run(SPU* spu, size_t size_file)
 
 void pDump(SPU spu)
 {
-    printf("%s___ProcDump___~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~%s\n", RED, RESET);
+    printf("%s___ProcDump___~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~%s\n", RED, RESET);
     printf("%scode     %s: %s", GREEN, RED, RESET);
     for (int q = 0; q < spu.ip; q++) 
         printf("%s%lg   %s", CEAN, spu.code[q], RESET);
@@ -210,10 +203,17 @@ void pDump(SPU spu)
         printf("%s%lg  %s ", CEAN, spu.stk.data[q + 1], RESET);
     putchar('\n');
 
+    /*
     printf("%sSTACK_REC%s:%s ", GREEN, RED, RESET);
     for (size_t q = 0; q < spu.recStk.size; q++) 
         printf("%s%lg  %s ", CEAN, spu.recStk.data[q + 1], RESET);
     putchar('\n');
+    */
+    printf("%sRAM%s      :%s ", GREEN, RED, RESET);
+    for (size_t q = 0; q < RAM_SIZE; q++) 
+        printf("%s%lg  %s ", CEAN, spu.ram[q], RESET);
+    putchar('\n');
+    
 
     printf("%sREGISTERS%s: %sax%s =%s %lg%s | %sbx%s = %s%lg%s | %scx %s= %s%lg%s | %sdx%s =%s %lg%s | %sex%s =%s %lg%s | " 
                           "%sfx%s =%s %lg%s | %sgx%s = %s%lg%s | %shx %s= %s%lg%s | %s \n", GREEN, RED, 
@@ -227,7 +227,7 @@ void pDump(SPU spu)
         printf(" %s%s %s= %s%zu%s |%s", BLUE, spu.lb[w].nameLabel, MANG, CEAN, spu.lb[w].ipLabel, RED, RESET);
     putchar('\n');
 
-    printf("%s~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~%s\n", RED, RESET);
+    printf("%s~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~%s\n", RED, RESET);
 }
 
 SPU* spuInit()
@@ -300,15 +300,24 @@ int getArgPuch(SPU* spu)
     int argument = (int)spu->code[spu->ip]; 
     spu->ip++; 
     int result  = BAD_ARG; 
-
-    if (argument & ARGTYPE_I) 
+    if ((argument & ARGTYPE_M) && (argument & ARGTYPE_R))
+    {
+        result  = spu->ram[(int)spu->registers[(int)spu->code[spu->ip]]];  
+        spu->ip++;  
+    }
+    else if (argument & ARGTYPE_I) 
     {
         result  = spu->code[spu->ip];        
         spu->ip++; 
     }
-    if (argument & ARGTYPE_R) 
+    else if (argument & ARGTYPE_R) 
     {
         result += spu->registers[(int)spu->code[spu->ip]];   
+        spu->ip++;
+    }
+    else if (argument & ARGTYPE_M)
+    {
+        result = spu->ram[(int)spu->code[spu->ip]];
         spu->ip++;
     }
 
@@ -320,10 +329,16 @@ int getArgPop(SPU* spu)
     assert(spu);
 
     spu->ip++;
-    int argument = spu->code[spu->ip]; spu->ip++;
+    int argument = spu->code[spu->ip]; 
+    spu->ip++;
 
-    if (argument & ARGTYPE_R) 
+    if ((argument & ARGTYPE_M) && (argument & ARGTYPE_R))
+        spu->ram[(int)spu->registers[(int)spu->code[spu->ip]]] = StackPop(&spu->stk);
+    else if (argument & ARGTYPE_R) 
         spu->registers[(int)spu->code[spu->ip]] = StackPop(&spu->stk);
+    else if (argument & ARGTYPE_M)
+        spu->ram[(int)spu->code[spu->ip]] = StackPop(&spu->stk);
+    
 
     spu->ip++;
 
