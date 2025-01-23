@@ -8,41 +8,43 @@
 
 const int    N_LABELS       = 10;
 const int    MAX_LABEL_SIZE = 40;
-const int    RAM_SIZE       = 30;
+const int    RAM_SIZE       = 20;
+const int    SPECIAL_CASES  = 10;
 const int    JUMP_STEP      = 2;
 const int    BAD_ARG        = 0;
-const double NUMBER_OF_REGISTERS = 8;
+const int    NUMBER_OF_REGISTERS = 8;
 
 enum ComputingCommands
 { 
     COMMAND_NULL  = 0,
-    COMMAND_PUSH  = 1,
-    COMMAND_POP   = 2,
-    COMMAND_JMP   = 3,
-    COMMAND_JA    = 4,
-    COMMAND_JB    = 5,
-    COMMAND_JAE   = 6,
-    COMMAND_JBE   = 7,
-    COMMAND_JE    = 8,
-    COMMAND_JHE   = 9,
-    COMMAND_HLT   = 100,
-    COMMAND_DUMP  = 101,
-    COMMAND_SDUMP = 102,
-    COMMAND_ADD   = 103,
-    COMMAND_SUB   = 104,
-    COMMAND_MUL   = 105,
-    COMMAND_DIV   = 106,
-    COMMAND_SQRT  = 107,
-    COMMAND_OUT   = 108,
-    COMMAND_IN    = 109,
-    COMMAND_SIN   = 110,
-    COMMAND_COS   = 111,
-    COMMAND_TG    = 112,
-    COMMAND_CTG   = 113,
-    COMMAND_CALL  = 150,
-    COMMAND_RET   = 151,
-};
-
+    COMMAND_PUSH , 
+    COMMAND_POP  ,
+    COMMAND_JMP  ,
+    COMMAND_JA   ,
+    COMMAND_JB   ,
+    COMMAND_JAE  ,
+    COMMAND_JBE  ,
+    COMMAND_JE   ,
+    COMMAND_JHE  ,
+    COMMAND_HLT  ,
+    COMMAND_DUMP ,
+    COMMAND_SDUMP,
+    COMMAND_ADD  ,
+    COMMAND_SUB  ,
+    COMMAND_MUL  ,
+    COMMAND_DIV  ,
+    COMMAND_SQRT ,
+    COMMAND_OUT  ,
+    COMMAND_IN   ,
+    COMMAND_SIN  , 
+    COMMAND_COS  , 
+    COMMAND_TG   , 
+    COMMAND_CTG  , 
+    COMMAND_CALL ,
+    COMMAND_RET  ,
+    NUMBER_OF_COOMANDS
+    };
+ 
 enum ArgTypes 
 {
     ARGTYPE_I = 1,

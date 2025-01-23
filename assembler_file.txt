@@ -1,7 +1,7 @@
-push 2
-pop bx
-push 123
-pop [bx]
-push [bx]
+push 3
+push 4
+pop cx
+pop [cx]
+push 10
 dump
 hlt

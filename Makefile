@@ -1,14 +1,19 @@
 Compiler = g++
 B = build_proc_asm/
 
+start: proc.exe
+
+run: proc.exe
+	./proc.exe
+
 #-----------------------------------------------------------------------
 
-start :  $(B)proc.o  $(B)procAsm.o  $(B)main.o  $(B)Stack.o
+proc.exe :  $(B)proc.o  $(B)procAsm.o  $(B)main.o  $(B)Stack.o
 	$(Compiler)  $(B)proc.o  $(B)procAsm.o  $(B)main.o  $(B)Stack.o -o proc.exe
 
 #-----------------------------------------------------------------------
 		
-$(B)proc.o : proc.cpp \
+$(B)proc.o : proc.cpp 
 	$(Compiler) -c proc.cpp -o $(B)proc.o
 
 $(B)procAsm.o : procAsm.cpp

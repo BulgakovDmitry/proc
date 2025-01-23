@@ -203,12 +203,11 @@ void pDump(SPU spu)
         printf("%s%lg  %s ", CEAN, spu.stk.data[q + 1], RESET);
     putchar('\n');
 
-    /*
     printf("%sSTACK_REC%s:%s ", GREEN, RED, RESET);
     for (size_t q = 0; q < spu.recStk.size; q++) 
         printf("%s%lg  %s ", CEAN, spu.recStk.data[q + 1], RESET);
     putchar('\n');
-    */
+    
     printf("%sRAM%s      :%s ", GREEN, RED, RESET);
     for (size_t q = 0; q < RAM_SIZE; q++) 
         printf("%s%lg  %s ", CEAN, spu.ram[q], RESET);
@@ -354,6 +353,4 @@ void jump (SPU* spu)
 {
     assert(spu);
     spu->ip = (int)spu->code[spu->ip+1];
-    //printf("I WANT TO JUMP IN IP = %d, CODE[IP] = %lg\n", spu->ip, spu->code[spu->ip]);
 }
-
