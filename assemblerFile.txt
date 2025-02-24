@@ -1,0 +1,4 @@
+push 9
+push 13
+dump
+hlt

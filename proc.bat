@@ -1,1 +1,1 @@
-g++ .\main.cpp .\proc.cpp .\Stack.cpp .\procAsm.cpp -o proc.exe -Wall -Wextra -g
+g++ proc/proc.cpp myLib/myLib.cpp myLib/Stack.cpp -Wall -Wextra -o proc.exe -I ./myLib

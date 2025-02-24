@@ -1,31 +1,53 @@
-Compiler = g++
-B = build_proc_asm/
+COMPILER = g++
+FLAGS = -Wall -Wextra -I . -I ./myLib
+O = obj/
+PR = proc/
+C = codeGenerator/
+M = myLib/
+L = language/
 
-start: proc.exe
 
-run: proc.exe
+LANG_OBJ = $(O)$(M)vector.o $(O)tokenizer.o $(O)tree.o $(O)parser.o $(O)codeGenerator.o $(O)langMain.o $(O)$(M)myLib.o $(O)$(M)Stack.o
+PROC_OBJ = $(O)proc.o $(O)$(M)Stack.o $(O)$(M)myLib.o
+ASEM_OBJ = $(O)procAsm.o $(O)$(M)myLib.o
+
+lang: lang.exe 
+	./lang.exe 
+
+proc: proc.exe      
 	./proc.exe
 
-#-----------------------------------------------------------------------
+asem: asem.exe
+	./asem.exe
 
-proc.exe :  $(B)proc.o  $(B)procAsm.o  $(B)main.o  $(B)Stack.o
-	$(Compiler)  $(B)proc.o  $(B)procAsm.o  $(B)main.o  $(B)Stack.o -o proc.exe
+run: asem proc       
 
-#-----------------------------------------------------------------------
-		
-$(B)proc.o : proc.cpp 
-	$(Compiler) -c proc.cpp -o $(B)proc.o
-
-$(B)procAsm.o : procAsm.cpp
-	$(Compiler) -c procAsm.cpp -o $(B)procAsm.o
-
-$(B)Stack.o : Stack.cpp
-	$(Compiler) -c Stack.cpp -o $(B)Stack.o
-
-$(B)main.o : main.cpp
-	$(Compiler) -c main.cpp -o $(B)main.o
+clean:
+	rm -f $(O)*.o 
 
 #-----------------------------------------------------------------------
 
-clean :
-	del build_proc_asm\*.o
+asem.exe: $(ASEM_OBJ)
+	$(COMPILER) $^ -o asem.exe
+
+proc.exe: $(PROC_OBJ)
+	$(COMPILER) $^ -o proc.exe
+
+lang.exe: $(LANG_OBJ)
+	$(COMPILER) $^ -o lang.exe
+
+#-----------------------------------------------------------------------
+
+$(O)%.o : $(PR)%.cpp
+	$(COMPILER) $(FLAGS) -c $< -o $@	
+
+$(O)%.o : %.cpp
+	$(COMPILER) $(FLAGS) -c $< -o $@
+
+$(O)%.o : $(L)%.cpp
+	$(COMPILER) $(FLAGS) -c $< -o $@
+
+$(O)%.o : $(C)%.cpp
+	$(COMPILER) $(FLAGS) -c $< -o $@
+
+#-----------------------------------------------------------------------

@@ -1,147 +1,198 @@
+#include <stdint.h>
 #include "procAsm.h"
+#include <myLib.h>
 
-size_t asembler(SPU* spu)
+static int  ipMove     (char command_recognizer[]);
+static int  argInit    (char* argument_recognizer);
+
+static void sintaxError(int num);
+
+static void workWithNum(Asm* asem, char argument_recognizer[], int* shift, int* t_1);
+static void workWithRAM(Asm* asem, char argument_recognizer[], int* shift, int t_1);
+static void workWithReg(Asm* asem, int* shift, int arg);
+
+static void addLabel   (Asm* asem, char command_recognizer[], size_t len);
+static bool searchLabel(Asm* asem, char* buffer, char argument_recognizer[], int* shift, int t_1);
+
+#define WORKING_WITH_THREE_ARGUMENT_COMMAND(constNameCommand)   \
+    (/*(uint64_t*)*/(asem->code))[asem->ip] = constNameCommand; \
+    asem->ip++;                                                 \
+    shift += t_0 + SPACE;                                       \
+    char argument_recognizer[LEN_REG] = "";                     \
+    int t_1 = 0;                                                \
+    sscanf(buffer + shift, "%s%n", argument_recognizer, &t_1);  \
+    int arg = argInit(argument_recognizer);                   
+
+#define ONE_ARGUMENT_COMMAND(command, constNameCommand)             \
+    else if (strcmp(command_recognizer, command) == 0)                   \
+    {                                                               \
+        (/*(uint64_t*)*/(asem->code))[asem->ip] = constNameCommand; \
+        asem->ip++;                                                 \
+        shift += t_0 + SPACE;                                       \
+        continue;                                                   \
+    }
+
+#define JUMP_TYPE_COMMAND(command, constNameCommand)                                  \
+    else if (strcmp(command_recognizer, command) == 0)                                     \
+    {                                                                                 \
+        (/*(uint64_t*)*/(asem->code))[asem->ip] = constNameCommand;                   \
+        asem->ip++;                                                                   \
+        shift += t_0 + SPACE;                                                         \
+        char argument_recognizer[MAX_LABEL_SIZE] = "";                                \
+        int t_1 = 0;                                                                  \
+        sscanf(buffer + shift, "%s%n", argument_recognizer, &t_1);                    \
+        if (isdigit(argument_recognizer[0]) != 0)                                     \
+        {                                                                             \
+            asem->code[asem->ip] = atof(argument_recognizer);                         \
+            asem->ip++;                                                               \
+            shift += t_1 + SPACE;                                                     \
+        }                                                                             \
+        else                                                                          \
+        {                                                                             \
+            bool label = searchLabel(asem, buffer, argument_recognizer, &shift, t_1); \
+            if (!label)                                                               \
+                sintaxError(3);                                                       \
+        }                                                                             \
+    } 
+
+int main(void)
 {
-    assert(spu);
-
-    const char name_file[19] = "assembler_file.txt";
-    FILE* assembler = fopen(name_file, "r");                         // ОТКРЫТИЕ ФАЙЛА ДЛЯ ЧТЕНИЯ 
+    FILE* assembler = fopen(ASSEMBLER_FILE_NAME, "r");               // ОТКРЫТИЕ ФАЙЛА ДЛЯ ЧТЕНИЯ 
     assert(assembler);
 
-    size_t* size_file = getFileSize(name_file);                      // ПОЛУЧЕНИЕ РАЗМЕРА ФАЙЛА 
+    Asm* asem = asmCtor(assembler);
+    assert(asem);
 
-    spu->code = (double*)calloc(*size_file * 3, sizeof(double));     // СОЗДАНИЕ МАССИВА code
-    assert(spu->code);
+    asembler(asem, assembler);
 
-    char* buffer = readFileToBuffer(assembler, *size_file);          // СОЗДАНИЕ БУФФЕРА
+    FILE* asmCodeFile = fopen(ASM_CODE_FILE, "w");
+    assert(asmCodeFile);
+
+    fwrite(asem->code, sizeof(double), asem->ip, asmCodeFile);
+
+    asmDtor(asem);
+    FCLOSE(asmCodeFile);
+    FCLOSE(assembler);
+
+    DBG(SUCCESS);
+    return 0;
+}
+
+Asm* asmCtor(FILE* file)
+{
+    Asm* asem = (Asm*)calloc(1, sizeof(Asm));
+    assert(asem);
+
+    asem->asmFileSize = getFileSize(file);
+
+    asem->code = (double*)calloc(asem->asmFileSize + 1, sizeof(double));     // СОЗДАНИЕ МАССИВА code
+    assert(asem->code);
+    asem->code[asem->asmFileSize] = '\0';
+
+    asem->ip = 0;
+
+    asem->lb = (Labels*)calloc(N_LABELS, sizeof(Labels));
+    assert(asem->lb);
+
+    asem->labelCounter = 0;
+
+    return asem;
+}
+
+void asmDtor(Asm* asem)
+{
+    assert(asem);
+
+    if (asem->code)
+        FREE(asem->code);
+    
+    asem->ip          = 0;
+    asem->asmFileSize = 0;
+
+    if (asem->lb)
+        FREE(asem->lb);
+
+    asem->labelCounter = 0;
+}
+
+
+void asembler(Asm* asem, FILE* assembler)
+{
+    assert(asem);
+    assert(assembler);
+    
+    char* buffer = readFileToBuffer(assembler, asem->asmFileSize);          // СОЗДАНИЕ БУФФЕРА
     assert(buffer);
 
     FCLOSE(assembler);
 
     char command_recognizer[10] = "";
-    int i = 0;  
+    int shift = 0;  
 
-    findLabel(spu, buffer, &i, command_recognizer);
-    //pDump(*spu);
-    //abort();
-    i = 0;
-    spu->ip = 0;
+    findLabel(asem, buffer, &shift, command_recognizer); 
 
-    while (buffer[i] != '\0')
+    shift = 0;                                          
+    asem->ip = 0;
+    
+    while (buffer[shift] != '\0')
     {   
         int t_0 = 0;
-        sscanf(buffer + i, "%s%n", command_recognizer, &t_0);
+        sscanf(buffer + shift, "%s%n", command_recognizer, &t_0);
+
+        //for (int i = 0; i < NUMBER_OF_JMP_TYPE_COMMAND; i++)
+        //    JUMP_TYPE_COMMAND(commandArr[i].CommandName, commandArr[i].constNameCommand)
+
+        /*for (int j = NUMBER_OF_JMP_TYPE_COMMAND; j < NUMBER_OF_ONE_ARGUMENT_COMMAND + NUMBER_OF_JMP_TYPE_COMMAND; j++) // FIXME
+        {
+            printf("%s\n", commandArr[j].CommandName);
+            ONE_ARGUMENT_COMMAND(commandArr[j].CommandName , commandArr[j].constNameCommand)
+        }*/
 
         if (strcmp(command_recognizer, "push") == 0)
         {
-            spu->code[spu->ip] = COMMAND_PUSH; 
-            spu->ip++;
-            i += t_0 + SPACE;
-
-            char argument_recognizer[3] = ""; 
-            int t_1 = 0;
-
-            sscanf(buffer + i, "%s%n", argument_recognizer, &t_1);
-            int arg = argInit(argument_recognizer);
-            //TODO
-            if (argument_recognizer[0] == '[')
-            {
-                workWithRAM(spu, argument_recognizer, &i, t_1);
-                continue;
+            WORKING_WITH_THREE_ARGUMENT_COMMAND(COMMAND_PUSH);
+            
+            if (argument_recognizer[0] == '[')                       
+            {                                                        
+                workWithRAM(asem, argument_recognizer, &shift, t_1); 
+                continue;                                            
+            }                                                        
+            else if (arg == 0)                                        
+            {                                                         
+                workWithNum(asem, argument_recognizer, &shift, &t_1); 
+                continue;                                             
             }
-            else if (arg == 0)
-            {
-                workWithNum(spu, argument_recognizer, &i, &t_1);
-                continue;
-            }
-            else 
-            {
-                workWithReg(spu, &i, arg);
-                continue;
+            else                                
+            {                                   
+                workWithReg(asem, &shift, arg); 
+                continue;                       
             }
         }    
             
         else if (strcmp(command_recognizer, "pop") == 0)
         {
-            spu->code[spu->ip] = COMMAND_POP; 
-            spu->ip++;
-            i += t_0 + SPACE;
+            WORKING_WITH_THREE_ARGUMENT_COMMAND(COMMAND_POP);
 
-            char argument_recognizer[3] = ""; 
-            int t_1 = 0;
-
-            sscanf(buffer + i, "%s%n", argument_recognizer, &t_1);
-            int arg = argInit(argument_recognizer);
-
-            if (argument_recognizer[0] == '[')
-            {
-                workWithRAM(spu, argument_recognizer, &i, t_1);
-                continue;
-            }
-            else 
-            {
-                workWithReg(spu, &i, arg);
-                continue;
-            }   
-        }
-
-        else if (strncmp(command_recognizer, "hlt", 3) == 0)                         \
-        {                                                                            \
-            spu->code[spu->ip] = COMMAND_HLT;                                        \
-            spu->ip++;                                                               \
-            i += t_0 + SPACE;                                                        \
-            continue;                                                                \
-        }
-
-        // TODO: for or codegen
-        #define ONE_ARGUMENT_COMMAND(command, constNameCommand)                      \
-            else if (strcmp(command_recognizer, command) == 0)                       \
-            {                                                                        \
-                spu->code[spu->ip] = constNameCommand;                               \
-                spu->ip++;                                                           \
-                i += t_0 + SPACE;                                                    \
-                continue;                                                            \
-            }
-
-        ONE_ARGUMENT_COMMAND("dump" , COMMAND_DUMP )
-        ONE_ARGUMENT_COMMAND("sdump", COMMAND_SDUMP)
-        ONE_ARGUMENT_COMMAND("add"  , COMMAND_ADD  )
-        ONE_ARGUMENT_COMMAND("sub"  , COMMAND_SUB  )
-        ONE_ARGUMENT_COMMAND("mul"  , COMMAND_MUL  )
-        ONE_ARGUMENT_COMMAND("div"  , COMMAND_DIV  )
-        ONE_ARGUMENT_COMMAND("sqrt" , COMMAND_SQRT )
-        ONE_ARGUMENT_COMMAND("out"  , COMMAND_OUT  )
-        ONE_ARGUMENT_COMMAND("in"   , COMMAND_IN   )
-        ONE_ARGUMENT_COMMAND("sin"  , COMMAND_SIN  )
-        ONE_ARGUMENT_COMMAND("cos"  , COMMAND_COS  )
-        ONE_ARGUMENT_COMMAND("tg"   , COMMAND_TG   )
-        ONE_ARGUMENT_COMMAND("ctg"  , COMMAND_CTG  )
-        ONE_ARGUMENT_COMMAND("ret"  , COMMAND_RET  )
-        #undef ONE_ARGUMENT_COMMAND
-
-        #define JUMP_TYPE_COMMAND(command, constNameCommand)                             \
-            else if (strcmp(command_recognizer, command) == 0)                           \
-            {                                                                            \
-                spu->code[spu->ip] = constNameCommand;                                   \
-                spu->ip++;                                                               \
-                i += t_0 + SPACE;                                                        \
-                char argument_recognizer[MAX_LABEL_SIZE] = "";                           \
-                int t_1 = 0;                                                             \
-                sscanf(buffer + i, "%s%n", argument_recognizer, &t_1);                   \
-                if (isdigit(argument_recognizer[0]) != 0)                                \
-                {                                                                        \
-                    spu->code[spu->ip] = atoi(argument_recognizer);                      \
-                    spu->ip++;                                                           \
-                    i += t_1 + SPACE;                                                    \
-                }                                                                        \
-                else                                                                     \
-                {                                                                        \
-                    bool metka = searchLabel(spu, buffer, argument_recognizer, &i, t_1); \
-                    if (!metka)                                                          \
-                        sintaxError(3);                                                  \
-                }                                                                        \
+            if (argument_recognizer[0] == '[')                       
+            {                                                        
+                workWithRAM(asem, argument_recognizer, &shift, t_1); 
+                continue;                                            
+            }                                                        
+            else                                
+            {                                   
+                workWithReg(asem, &shift, arg); 
+                continue;                       
             } 
+        }
 
+        else if (strncmp(command_recognizer, "hlt", 3) == 0)       \
+        {                                                          \
+            (/*(uint64_t*)*/(asem->code))[asem->ip] = COMMAND_HLT; \
+            asem->ip++;                                            \
+            shift += t_0 + SPACE;                                  \
+            continue;                                              \
+        }
+        
         JUMP_TYPE_COMMAND("call", COMMAND_CALL)
         JUMP_TYPE_COMMAND("jmp" , COMMAND_JMP )  
         JUMP_TYPE_COMMAND("ja"  , COMMAND_JA  )
@@ -150,119 +201,74 @@ size_t asembler(SPU* spu)
         JUMP_TYPE_COMMAND("jbe" , COMMAND_JBE )
         JUMP_TYPE_COMMAND("je"  , COMMAND_JE  )
         JUMP_TYPE_COMMAND("jhe" , COMMAND_JHE )
-        #undef JUMP_TYPE_COMMAND
 
-        else 
-        {
-            size_t len = strlen(command_recognizer);
-            i += len;
-            continue;         
+        ONE_ARGUMENT_COMMAND("dump" , COMMAND_DUMP )
+        ONE_ARGUMENT_COMMAND("sdump", COMMAND_SDUMP)
+        ONE_ARGUMENT_COMMAND("ctg"  , COMMAND_CTG  )
+        ONE_ARGUMENT_COMMAND("add"  , COMMAND_ADD  )
+        ONE_ARGUMENT_COMMAND("sub"  , COMMAND_SUB  )
+        ONE_ARGUMENT_COMMAND("mul"  , COMMAND_MUL  )
+        ONE_ARGUMENT_COMMAND("div"  , COMMAND_DIV  )
+        ONE_ARGUMENT_COMMAND("sqrt" , COMMAND_SQRT )
+        ONE_ARGUMENT_COMMAND("out"  , COMMAND_OUT  ) 
+        ONE_ARGUMENT_COMMAND("in"   , COMMAND_IN   )
+        ONE_ARGUMENT_COMMAND("sin"  , COMMAND_SIN  )
+        ONE_ARGUMENT_COMMAND("cos"  , COMMAND_COS  )
+        ONE_ARGUMENT_COMMAND("tg"   , COMMAND_TG   )
+        ONE_ARGUMENT_COMMAND("ret"  , COMMAND_RET  )
+
+
+        else
+        { 
+            size_t len = strlen(command_recognizer); 
+            shift += (int)len;                           
+            continue;
         }
     } 
 
     FREE(buffer);
-    return *size_file;
 }
 
-size_t* getFileSize(const char* name_file) // TODO: to mylib
+#undef ONE_ARGUMENT_COMMAND
+#undef JUMP_TYPE_COMMAND
+
+#undef WORKING_WITH_THREE_ARGUMENT_COMMAND
+
+void findLabel(Asm* asem, char* buffer, int* shift, char command_recognizer[])
 {
-    assert(name_file);
-
-    struct stat st;
-    stat(name_file, &st); 
-    size_t* size_file = (size_t*)calloc(1, sizeof(size_t*));
-    assert(size_file);
-
-    *size_file = st.st_size;                                                                          
-    return size_file; 
-}
-
-char* readFileToBuffer(FILE* file, size_t size_file)
-{
-    assert(file);
-    assert(size_file);
-
-    char* buffer = (char*)calloc(size_file, sizeof(char));    // СОЗДАНИЕ БУФФЕРА
-    assert(buffer);
-
-    size_file = fread(buffer, sizeof(char), size_file, file); // ЗАПОЛЕНИЕ БУФФЕРА
-
-    return buffer;
-}
-
-void createLabel(SPU* spu, int* i, char command_recognizer[])
-{
-    assert(spu);
-    assert(i);
-    assert(command_recognizer);
-
-    defineLabel(spu, command_recognizer);
-
-    size_t len = strlen(command_recognizer);
-    *i += len;
-
-    addLabel(spu, command_recognizer, len);
-}
-
-void defineLabel(SPU* spu, char command_recognizer[])
-{
-    assert(spu);
-    assert(command_recognizer);
-
-    char temp = 'a';
-    int j = 0;
-    while (j < MAX_LABEL_SIZE)
-    {
-        if (command_recognizer[j] == ':')
-        { 
-            temp = command_recognizer[j];
-            j = MAX_LABEL_SIZE;
-            continue;
-        }
-        j++;
-        if (j == MAX_LABEL_SIZE)
-            sintaxError(1);
-    }
-    if (temp != ':')
-        sintaxError(2);
-}
-
-void findLabel(SPU* spu, char* buffer, int* i, char command_recognizer[])
-{
-    assert(spu);
+    assert(asem);
     assert(buffer);
     assert(command_recognizer);
 
-    while (buffer[*i] != '\0')
+    while (buffer[*shift] != '\0')
     {   
-        sscanf(buffer + (*i), "%s", command_recognizer);
+        sscanf(buffer + (*shift), "%s", command_recognizer);
         size_t command_recognizer_len = strlen(command_recognizer);
 
-        spu->ip += ipMove(command_recognizer);
+        asem->ip += ipMove(command_recognizer);
 
         if (command_recognizer[command_recognizer_len - 1] == ':')
         {
-            //printf(YELLOW "ADD LABEL %s\n" RESET, command_recognizer);
-            addLabel(spu, command_recognizer, command_recognizer_len);
-            (*i) += command_recognizer_len + SPACE;
+            addLabel(asem, command_recognizer, command_recognizer_len);
+            (*shift) += (int)command_recognizer_len + SPACE;
         }
         else    
-            (*i) += command_recognizer_len + SPACE;
+            (*shift) += (int)command_recognizer_len + SPACE;
     }
 }
 
-void addLabel(SPU* spu, char command_recognizer[], size_t len)
+static void addLabel(Asm* asem, char command_recognizer[], size_t len)
 {
-    assert(spu);
+    assert(asem);
     assert(command_recognizer);
 
     command_recognizer[len - 1] = '\0';  // СТИРАНИЕ ДВОЕТОЧИЯ ИЗ НАЗВАНИЯ МЕТКИ
-    spu->lb[spu->labelCounter].nameLabel = strdup(command_recognizer);
-    spu->lb[spu->labelCounter].ipLabel = spu->ip + 1;
-    spu->labelCounter++;
+    asem->lb[asem->labelCounter].nameLabel = strdup(command_recognizer);
+    asem->lb[asem->labelCounter].ipLabel = asem->ip + 1;
+    asem->labelCounter++;
 }
 
-int argInit(char* argument_recognizer)
+static int argInit(char* argument_recognizer)
 {
     assert(argument_recognizer);
 
@@ -277,34 +283,34 @@ int argInit(char* argument_recognizer)
     return arg;
 }
 
-void sintaxError(int num)
+static void sintaxError(int num)
 {
     printf(RED "SINTAX ERROR %d\n" RESET, num);
     abort();
 }
 
-bool searchLabel(SPU* spu, char* buffer, char argument_recognizer[], int* i, int t_1)
+static bool searchLabel(Asm* asem, char* buffer, char argument_recognizer[], int* shift, int t_1)
 {
-    assert(spu);
+    assert(asem);
     assert(buffer);
     assert(argument_recognizer);
 
     bool metka = false;
-    for (int y = 0; y < spu->labelCounter; y++)
+    for (int y = 0; y < asem->labelCounter; y++)
     {
-        if (strcmp(argument_recognizer, spu->lb[y].nameLabel) == 0)
+        if (strcmp(argument_recognizer, asem->lb[y].nameLabel) == 0)
         {
-            spu->code[spu->ip] = spu->lb[y].ipLabel;
-            spu->ip++;
+            asem->code[asem->ip] = (double)asem->lb[y].ipLabel;
+            asem->ip++;
             metka = true;
-            (*i) += t_1 + SPACE;
+            (*shift) += t_1 + SPACE;
             continue;
         }
     }
     return metka;
 } 
 
-int ipMove(char command_recognizer[])
+static int ipMove(char command_recognizer[])
 {
     assert(command_recognizer);
     int ip = 0;
@@ -321,63 +327,63 @@ int ipMove(char command_recognizer[])
     return ip;
 }
 
-void workWithRAM(SPU* spu, char argument_recognizer[], int* i, int t_1)
+static void workWithRAM(Asm* asem, char argument_recognizer[], int* shift, int t_1)
 {
-    assert(spu);
+    assert(asem);
     assert(argument_recognizer);
-    (*i)++;
-    spu->code[spu->ip] = ARGTYPE_M;
-    spu->ip++;
+    (*shift)++;
+    asem->code[asem->ip] = ARGTYPE_M;
+    asem->ip++;
     argument_recognizer[t_1 - 1] = '\0';
     if (!isalpha(argument_recognizer[1]))
     {
-        double argument = atoi(argument_recognizer + 1);
-
+        double argument = atof(argument_recognizer + 1);
+        
         if (argument >= RAM_SIZE || argument < 0)
             sintaxError(6);
-        
-        spu->code[spu->ip] = argument;
-        spu->ip++;
+                                                
+        asem->code[asem->ip] = argument;
+        asem->ip++;
 
-        (*i) += t_1;
+        (*shift) += t_1;
     }
     else
     {
-        spu->code[spu->ip - 1] += ARGTYPE_R;
+        asem->code[asem->ip - 1] += ARGTYPE_R;
         int argRam = argInit(argument_recognizer + 1);
         int registr = argRam;
 
         if (!registr)
             sintaxError(8);
 
-        spu->code[spu->ip] = registr;
-        spu->ip++;
-        (*i) += t_1;
+        asem->code[asem->ip] = registr;
+        asem->ip++;
+        (*shift) += t_1;
     }
 }
 
-void workWithReg(SPU* spu, int* i, int arg)
+static void workWithReg(Asm* asem, int* shift, int arg)
 {
-    assert(spu);
-    (*i) += 3;
+    assert(asem);
+    (*shift) += 3;
     int registr = arg;
-    spu->code[spu->ip] = ARGTYPE_R;
-    spu->ip++;
-    spu->code[spu->ip] = registr;
-    spu->ip++;
+    asem->code[asem->ip] = ARGTYPE_R;
+    asem->ip++;
+    asem->code[asem->ip] = registr;
+    asem->ip++;
 }
 
-void workWithNum(SPU* spu, char argument_recognizer[], int* i, int* t_1)
+static void workWithNum(Asm* asem, char argument_recognizer[], int* shift, int* t_1)
 {
-    assert(spu);
+    assert(asem);
     assert(argument_recognizer);
 
     int argument = 0;
     sscanf(argument_recognizer, "%d%n", &argument, t_1);
-    spu->code[spu->ip] = ARGTYPE_I; 
-    spu->ip++;
-    (*i) += SPACE;
-    spu->code[spu->ip] = argument; 
-    spu->ip++;
-    (*i) += (*t_1);
+    asem->code[asem->ip] = ARGTYPE_I; 
+    asem->ip++;
+    (*shift) += SPACE;
+    asem->code[asem->ip] = argument; 
+    asem->ip++;
+    (*shift) += (*t_1);
 }

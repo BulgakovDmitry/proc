@@ -1,7 +1,8 @@
 #ifndef PROC_ASSM_H
 #define PROC_ASSM_H
 
-#include "proc.h"
+#include <myLib.h>
+#include "commonProcAsm.h"
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <stdio.h>
@@ -9,50 +10,55 @@
 #include <ctype.h>
 #include <stdbool.h>
 
-#define FCLOSE(ptr_) \
-    do {fclose(ptr_); ptr_ = NULL;} while(false)
+static const int SPACE          = 1 ;
+static const int LEN_REG        = 3 ;
+static const int MAX_LABEL_SIZE = 40;
+static const char* const ASSEMBLER_FILE_NAME = "assemblerFile.txt";
 
-const int SPACE   = 1;
-const int LEN_REG = 3;
+struct Labels
+{
+    const char* nameLabel;
+    size_t       ipLabel;
+};
 
-struct CMD_ARRAY      {const char* cmd_array;};
+struct Asm
+{
+    size_t asmFileSize;
+    double* code;
+    int ip;
+    Labels* lb;
+    int labelCounter;
+};
 
 struct IP_MOVE        
 {
     const char* const CommandName; 
     int ipShift;
+    ComputingCommands constNameCommand;
 };
 
-const IP_MOVE commandArr[NUMBER_OF_COOMANDS] = {
-                                                    {"push", 3}, {"pop", 3}, {"hlt", 1}, {"dump", 1}, {"sdump", 1}, {"add", 1}, 
-                                                    {"sub" , 1}, {"mul", 1}, {"div", 1}, {"sqrt", 1}, {"out"  , 1}, {"in" , 1}, 
-                                                    {"sin" , 1}, {"cos", 1}, {"ret", 1}, {"jmp" , 2}, {"ja"   , 2}, {"jb" , 2}, 
-                                                    {"jae" , 2}, {"jbe", 2}, {"je" , 2}, {"jhe" , 2}, {"call" , 2}, {"tg" , 1},
-                                                    {"ctg" , 1}
-                                               };
+static const int NUMBER_OF_JMP_TYPE_COMMAND     = 8;
+static const int NUMBER_OF_ONE_ARGUMENT_COMMAND = 14;
+
+static const IP_MOVE commandArr[NUMBER_OF_COOMANDS] = {
+                                                        {"ja", 2, COMMAND_JA}, {"jb", 2, COMMAND_JB}, {"jae", 2, COMMAND_JAE}, 
+                                                        {"jbe" , 2, COMMAND_JBE}, {"je", 2, COMMAND_JE}, 
+                                                        {"jhe", 2, COMMAND_JHE}, {"call", 2, COMMAND_CALL}, {"jmp", 2, COMMAND_JMP},
+                                                        {"ctg" , 1, COMMAND_CTG}, {"dump", 1, COMMAND_DUMP}, {"sdump", 1, COMMAND_SDUMP}, 
+                                                        {"add" , 1, COMMAND_ADD}, {"sub", 1, COMMAND_SUB}, {"mul", 1, COMMAND_MUL}, 
+                                                        {"div" , 1, COMMAND_DIV}, {"sqrt", 1, COMMAND_SQRT}, {"out"  , 1, COMMAND_OUT},
+                                                        {"in"  , 1, COMMAND_IN}, {"sin", 1, COMMAND_SIN}, {"cos", 1, COMMAND_COS}, 
+                                                        {"ret" , 1, COMMAND_RET}, {"tg"  , 1, COMMAND_TG}, 
+                                                        {"hlt" , 1, COMMAND_HLT}, 
+                                                        {"push", 3, COMMAND_PUSH}, {"pop", 3, COMMAND_POP},
+                                                      };
 
 const char* const registerNames[NUMBER_OF_REGISTERS] = {"ax", "bx", "cx", "dx", "ex", "fx", "gx", "hx"};
 
-size_t asembler(SPU* spu);
+void asembler(Asm* asem, FILE* assembler);
+Asm* asmCtor(FILE* file);
+void asmDtor(Asm* asem);
 
-size_t* getFileSize     (const char* name_file);
-char*   readFileToBuffer(FILE* file, size_t size_file);
-int     ipMove          (char command_recognizer[]);
-void    defineLabel     (SPU* spu, char command_recognizer[]);
-int     argInit         (char* argument_recognizer);
-bool    searchLabel     (SPU* spu, char* buffer, char argument_recognizer[], int* i, int t_1);
-void    createLabel     (SPU* spu, int* i, char command_recognizer[]);
-void    sintaxError     (int num);
-void    addLabel        (SPU* spu, char command_recognizer[], size_t len);
-void    findLabel       (SPU* spu, char* buffer, int* i, char command_recognizer[]);
-void    workWithRAM     (SPU* spu, char argument_recognizer[], int* i, int t_1);
-void    workWithReg     (SPU* spu, int* i, int arg);
-void    workWithNum     (SPU* spu, char argument_recognizer[], int* i, int* t_1);
+void  findLabel(Asm* asem, char* buffer, int* i, char command_recognizer[]); // первичный прогон по коду для определения меток
 
-
-
-
-
-
-    
 #endif
