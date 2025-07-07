@@ -1,6 +1,6 @@
 #include <stdint.h>
-#include "procAsm.h"
-#include <myLib.h>
+#include <myLib.hpp>
+#include "../headers/asm.hpp"
 
 static int  ipMove     (char command_recognizer[]);
 static int  argInit    (char* argument_recognizer);
@@ -55,14 +55,14 @@ static bool searchLabel(Asm* asem, char* buffer, char argument_recognizer[], int
         }                                                                             \
     } 
 
-int main(void)
+int main()
 {
     FILE* assembler = fopen(ASSEMBLER_FILE_NAME, "r");               // ОТКРЫТИЕ ФАЙЛА ДЛЯ ЧТЕНИЯ 
     assert(assembler);
 
     Asm* asem = asmCtor(assembler);
     assert(asem);
-
+    
     asembler(asem, assembler);
 
     FILE* asmCodeFile = fopen(ASM_CODE_FILE, "w");
@@ -71,6 +71,7 @@ int main(void)
     fwrite(asem->code, sizeof(double), asem->ip, asmCodeFile);
 
     asmDtor(asem);
+
     FCLOSE(asmCodeFile);
     FCLOSE(assembler);
 
@@ -103,6 +104,9 @@ void asmDtor(Asm* asem)
 {
     assert(asem);
 
+    for (size_t i = 0; i < (size_t)asem->labelCounter; ++i)
+        FREE(asem->lb[i].nameLabel);
+
     if (asem->code)
         FREE(asem->code);
     
@@ -113,6 +117,7 @@ void asmDtor(Asm* asem)
         FREE(asem->lb);
 
     asem->labelCounter = 0;
+    FREE(asem);
 }
 
 
@@ -121,10 +126,8 @@ void asembler(Asm* asem, FILE* assembler)
     assert(asem);
     assert(assembler);
     
-    char* buffer = readFileToBuffer(assembler, asem->asmFileSize);          // СОЗДАНИЕ БУФФЕРА
+    char* buffer = readFileToBuffer(assembler);          // СОЗДАНИЕ БУФФЕРА
     assert(buffer);
-
-    FCLOSE(assembler);
 
     char command_recognizer[10] = "";
     int shift = 0;  
@@ -138,15 +141,6 @@ void asembler(Asm* asem, FILE* assembler)
     {   
         int t_0 = 0;
         sscanf(buffer + shift, "%s%n", command_recognizer, &t_0);
-
-        //for (int i = 0; i < NUMBER_OF_JMP_TYPE_COMMAND; i++)
-        //    JUMP_TYPE_COMMAND(commandArr[i].CommandName, commandArr[i].constNameCommand)
-
-        /*for (int j = NUMBER_OF_JMP_TYPE_COMMAND; j < NUMBER_OF_ONE_ARGUMENT_COMMAND + NUMBER_OF_JMP_TYPE_COMMAND; j++) // FIXME
-        {
-            printf("%s\n", commandArr[j].CommandName);
-            ONE_ARGUMENT_COMMAND(commandArr[j].CommandName , commandArr[j].constNameCommand)
-        }*/
 
         if (strcmp(command_recognizer, "push") == 0)
         {
@@ -239,22 +233,31 @@ void findLabel(Asm* asem, char* buffer, int* shift, char command_recognizer[])
     assert(asem);
     assert(buffer);
     assert(command_recognizer);
+    assert(shift);
 
-    while (buffer[*shift] != '\0')
+    int pos = *shift; 
+
+    while (buffer[pos] != '\0')
     {   
-        sscanf(buffer + (*shift), "%s", command_recognizer);
-        size_t command_recognizer_len = strlen(command_recognizer);
+        int read = 0;
+
+        if (sscanf(buffer + pos, "%9s%n", command_recognizer, &read) != 1)
+            break; 
+
+        pos += read;   
+
+        while (buffer[pos] == ' ' || buffer[pos] == '\t')
+            ++pos;
+
+        size_t len = strlen(command_recognizer);
 
         asem->ip += ipMove(command_recognizer);
 
-        if (command_recognizer[command_recognizer_len - 1] == ':')
-        {
-            addLabel(asem, command_recognizer, command_recognizer_len);
-            (*shift) += (int)command_recognizer_len + SPACE;
-        }
-        else    
-            (*shift) += (int)command_recognizer_len + SPACE;
+        if (len && command_recognizer[len - 1] == ':')
+            addLabel(asem, command_recognizer, len);
     }
+    
+        *shift = pos; 
 }
 
 static void addLabel(Asm* asem, char command_recognizer[], size_t len)

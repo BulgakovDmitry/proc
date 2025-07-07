@@ -4,7 +4,7 @@
 enum ComputingCommands
 { 
     COMMAND_NULL  = 0,
-    COMMAND_PUSH  = 1/*0x757073*/, 
+    COMMAND_PUSH  = 1,
     COMMAND_POP   = 2,
     COMMAND_JMP  ,
     COMMAND_JA   ,

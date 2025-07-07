@@ -1,11 +1,11 @@
 #ifndef PROC_H
 #define PROC_H
 
-#include <Stack.h>
+#include <stack.hpp>
 #include <stdio.h>
 #include <string.h>
 #include <math.h>                                                  
-#include "commonProcAsm.h"
+#include "../../common/headers/commonProcAsm.hpp"
 
 const int    SPECIAL_CASES          = 10;
 const int    JUMP_STEP              = 2;

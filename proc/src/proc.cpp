@@ -1,7 +1,6 @@
 #include <stdint.h>
-
-#include "proc.h"
-//#include "procAsm.h"
+#include <myLib.hpp>
+#include "../headers/proc.hpp"
 
 static int  getArgPush (SPU* spu);
 static int  getArgPop  (SPU* spu);
@@ -20,10 +19,10 @@ static PairOfNum getPairOfNumbersFromStack(SPU* spu);
 
 #define MODIFIED_JMP(spu, codeOp)       \
     {                                   \
-        double a = StackPop(&spu->stk); \
-        double b = StackPop(&spu->stk); \
-        StackPush(&spu->stk, b);        \
-        StackPush(&spu->stk, a);        \
+        double a = stackPop(&spu->stk); \
+        double b = stackPop(&spu->stk); \
+        stackPush(&spu->stk, b);        \
+        stackPush(&spu->stk, a);        \
         if (int(b) codeOp int(a))       \
             STANDART_JMP(spu)           \
         else                            \
@@ -43,15 +42,15 @@ static PairOfNum getPairOfNumbersFromStack(SPU* spu);
 #define STANDART_BINARY_OPERATION(operation)             \
     {                                                    \
         PairOfNum pair = getPairOfNumbersFromStack(spu); \
-        StackPush(&spu->stk, pair.b operation pair.a);   \
+        stackPush(&spu->stk, pair.b operation pair.a);   \
         spu->ip++;                                       \
         break;                                           \
     }
 
 #define STANDART_UNARY_OPERATION(operation) \
     {                                       \
-        double a = StackPop(&spu->stk);     \
-        StackPush(&spu->stk, operation(a)); \
+        double a = stackPop(&spu->stk);     \
+        stackPush(&spu->stk, operation(a)); \
         spu->ip++;                          \
         break;                              \
     } 
@@ -87,13 +86,13 @@ int run(SPU* spu, size_t sizeFile)
         {
             case COMMAND_PUSH: 
             {
-                StackPush(&spu->stk, getArgPush(spu));
+                stackPush(&spu->stk, getArgPush(spu));
                 break;
             }
             case COMMAND_POP:  
             {
                 getArgPop(spu);
-                StackPop(&spu->stk);
+                stackPop(&spu->stk);
                 break;
             }
             case COMMAND_JMP :  JUMP_COMMON(spu, 0, ==);
@@ -106,28 +105,28 @@ int run(SPU* spu, size_t sizeFile)
 
             case COMMAND_CALL:
             {
-                StackPush(&spu->recStk, spu->ip + JUMP_STEP);
+                stackPush(&spu->recStk, spu->ip + JUMP_STEP);
                 jump(spu);                      
                 spu->ip--;
                 break;
             }
             case COMMAND_RET:
             {
-                spu->ip = (int)StackPop(&spu->recStk);
+                spu->ip = (int)stackPop(&spu->recStk);
                 break;
             }
             case COMMAND_IN:
             {
                 double a = 0;
                 scanf("%lg", &a);
-                StackPush(&spu->stk, a);
+                stackPush(&spu->stk, a);
                 spu->ip++;
                 break;
             }
 
             case COMMAND_OUT:
             {
-                printf("%sOUT%s:%s %lg%s\n", GREEN, RED, MANG, StackPop(&spu->stk), RESET);
+                printf("%sOUT%s:%s %lg%s\n", GREEN, RED, MANG, stackPop(&spu->stk), RESET);
                 spu->ip++;
                 break;
             }
@@ -151,7 +150,7 @@ int run(SPU* spu, size_t sizeFile)
             case COMMAND_SDUMP:
             {
                 spu->ip++;
-                StackDump(&spu->stk, INFO());
+                stackDump(spu->stk);
                 break;
             }
             case COMMAND_HLT:
@@ -233,8 +232,8 @@ SPU* spuInit(FILE* asmCodeFile)
     SPU* spu = (SPU*)calloc(1, sizeof(SPU));
     assert(spu);
 
-    STACK_CTOR(&spu->stk);
-    STACK_CTOR(&spu->recStk);
+    stackCtor(&spu->stk);
+    stackCtor(&spu->recStk);
 
     spu->registers = (double*)calloc(NUMBER_OF_REGISTERS + 1, sizeof(double)); // СОЗДАНИЕ ЯЧЕЕЙ ДЛЯ РЕГИСТРОВ
     assert(spu->registers);
@@ -273,8 +272,8 @@ void spuDelete(SPU* spu)
     
     spu->ip           = 0;
 
-    StackDtor(&spu->stk);
-    StackDtor(&spu->recStk);
+    stackDtor(&spu->stk);
+    stackDtor(&spu->recStk);
     FREE(spu);
 }
 
@@ -284,8 +283,8 @@ static PairOfNum getPairOfNumbersFromStack(SPU* spu)
 
     PairOfNum pair = {};
 
-    pair.a = StackPop(&spu->stk);
-    pair.b = StackPop(&spu->stk);
+    pair.a = stackPop(&spu->stk);
+    pair.b = stackPop(&spu->stk);
 
     return pair;
 }
@@ -322,9 +321,6 @@ static int getArgPush(SPU* spu)
     return result;
 }
 
-
-//TODO val as arg
-
 static int getArgPop(SPU* spu)
 {
     assert(spu);
@@ -334,11 +330,11 @@ static int getArgPop(SPU* spu)
     spu->ip++;
 
     if ((argument & ARGTYPE_M) && (argument & ARGTYPE_R))
-        spu->ram[(int)spu->registers[(int)spu->code[spu->ip]]] = StackGet(&spu->stk);
+        spu->ram[(int)spu->registers[(int)spu->code[spu->ip]]] = stackGet(&spu->stk);
     else if (argument & ARGTYPE_R) 
-        spu->registers[(int)spu->code[spu->ip]] = StackGet(&spu->stk);
+        spu->registers[(int)spu->code[spu->ip]] = stackGet(&spu->stk);
     else if (argument & ARGTYPE_M)
-        spu->ram[(int)spu->code[spu->ip]] = StackGet(&spu->stk);
+        spu->ram[(int)spu->code[spu->ip]] = stackGet(&spu->stk);
     
     spu->ip++;
 

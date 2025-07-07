@@ -1,8 +1,8 @@
 #ifndef PROC_ASSM_H
 #define PROC_ASSM_H
 
-#include <myLib.h>
-#include "commonProcAsm.h"
+#include <myLib.hpp>
+#include "../../common/headers/commonProcAsm.hpp"
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <stdio.h>
@@ -11,13 +11,13 @@
 #include <stdbool.h>
 
 static const int SPACE          = 1 ;
-static const int LEN_REG        = 3 ;
+static const int LEN_REG        = 8 ;
 static const int MAX_LABEL_SIZE = 40;
 static const char* const ASSEMBLER_FILE_NAME = "assemblerFile.txt";
 
 struct Labels
 {
-    const char* nameLabel;
+    char* nameLabel;
     size_t       ipLabel;
 };
 

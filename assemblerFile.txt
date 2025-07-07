@@ -1,4 +1,21 @@
 push 9
 push 13
+pop cx
+pop ax
+push cx
+push ax
+sub
+pop dx
+push 6
+pop [dx]
+call func
 dump
 hlt
+
+
+func:
+push 4
+push cx
+ret
+
+
