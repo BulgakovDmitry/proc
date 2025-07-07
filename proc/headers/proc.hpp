@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>                                                  
-#include "../../common/headers/commonProcAsm.hpp"
+#include "../../common/commonProcAsm.hpp"
 
 const int    SPECIAL_CASES          = 10;
 const int    JUMP_STEP              = 2;

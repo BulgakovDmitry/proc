@@ -2,7 +2,7 @@
 #define PROC_ASSM_H
 
 #include <myLib.hpp>
-#include "../../common/headers/commonProcAsm.hpp"
+#include "../../common/commonProcAsm.hpp"
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <stdio.h>

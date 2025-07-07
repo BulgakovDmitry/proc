@@ -15,7 +15,7 @@ static void addLabel   (Asm* asem, char command_recognizer[], size_t len);
 static bool searchLabel(Asm* asem, char* buffer, char argument_recognizer[], int* shift, int t_1);
 
 #define WORKING_WITH_THREE_ARGUMENT_COMMAND(constNameCommand)   \
-    (/*(uint64_t*)*/(asem->code))[asem->ip] = constNameCommand; \
+    ((asem->code))[asem->ip] = constNameCommand;                \
     asem->ip++;                                                 \
     shift += t_0 + SPACE;                                       \
     char argument_recognizer[LEN_REG] = "";                     \
@@ -24,18 +24,18 @@ static bool searchLabel(Asm* asem, char* buffer, char argument_recognizer[], int
     int arg = argInit(argument_recognizer);                   
 
 #define ONE_ARGUMENT_COMMAND(command, constNameCommand)             \
-    else if (strcmp(command_recognizer, command) == 0)                   \
+    else if (strcmp(command_recognizer, command) == 0)              \
     {                                                               \
-        (/*(uint64_t*)*/(asem->code))[asem->ip] = constNameCommand; \
+        ((asem->code))[asem->ip] = constNameCommand;                \
         asem->ip++;                                                 \
         shift += t_0 + SPACE;                                       \
         continue;                                                   \
     }
 
 #define JUMP_TYPE_COMMAND(command, constNameCommand)                                  \
-    else if (strcmp(command_recognizer, command) == 0)                                     \
+    else if (strcmp(command_recognizer, command) == 0)                                \
     {                                                                                 \
-        (/*(uint64_t*)*/(asem->code))[asem->ip] = constNameCommand;                   \
+        ((asem->code))[asem->ip] = constNameCommand;                                  \
         asem->ip++;                                                                   \
         shift += t_0 + SPACE;                                                         \
         char argument_recognizer[MAX_LABEL_SIZE] = "";                                \
@@ -120,7 +120,6 @@ void asmDtor(Asm* asem)
     FREE(asem);
 }
 
-
 void asembler(Asm* asem, FILE* assembler)
 {
     assert(asem);
@@ -181,7 +180,7 @@ void asembler(Asm* asem, FILE* assembler)
 
         else if (strncmp(command_recognizer, "hlt", 3) == 0)       \
         {                                                          \
-            (/*(uint64_t*)*/(asem->code))[asem->ip] = COMMAND_HLT; \
+            ((asem->code))[asem->ip] = COMMAND_HLT;                \
             asem->ip++;                                            \
             shift += t_0 + SPACE;                                  \
             continue;                                              \
@@ -210,7 +209,6 @@ void asembler(Asm* asem, FILE* assembler)
         ONE_ARGUMENT_COMMAND("cos"  , COMMAND_COS  )
         ONE_ARGUMENT_COMMAND("tg"   , COMMAND_TG   )
         ONE_ARGUMENT_COMMAND("ret"  , COMMAND_RET  )
-
 
         else
         { 
@@ -257,7 +255,7 @@ void findLabel(Asm* asem, char* buffer, int* shift, char command_recognizer[])
             addLabel(asem, command_recognizer, len);
     }
     
-        *shift = pos; 
+    *shift = pos; 
 }
 
 static void addLabel(Asm* asem, char command_recognizer[], size_t len)
