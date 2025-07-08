@@ -78,13 +78,16 @@ This program counts the factorial of a positive integer:
 Example content of `assemblerFile.txt`:
 ```asm
 in
+
 pop ax
 push ax
 pop bx
 call fact
 push bx
+
 out
 hlt
+
 fact:
 push ax
 push 1
@@ -98,8 +101,10 @@ push ax
 call decrease
 pop ax
 call fact
+
 end:
 ret
+
 decrease:
 push 1
 sub
