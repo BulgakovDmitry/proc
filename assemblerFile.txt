@@ -1,6 +1,5 @@
 push 9
 push 12
-in
 out
 dump
 hlt

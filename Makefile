@@ -36,8 +36,8 @@ FLAGS		  = -D _DEBUG -ggdb3 -std=c++17 -O0 -Wall -Wextra -Weffc++ -Waggressive-l
 
 #--------------------------------------------------------------------------------------------------
 STACK_OBJ = $(OBJ)stack.o $(OBJ)myLib.o
-PROC_OBJ  = $(OBJ)proc.o  $(OBJ)myLib.o
-ASM_OBJ   = $(OBJ)asm.o   $(OBJ)myLib.o
+PROC_OBJ  = $(OBJ)proc.o $(OBJ)mainProc.o  $(OBJ)myLib.o
+ASM_OBJ   = $(OBJ)asm.o $(OBJ)mainAsm.o $(OBJ)myLib.o
 #--------------------------------------------------------------------------------------------------
 
 
