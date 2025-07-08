@@ -28,7 +28,7 @@ The project is implemented in C and includes:
 - Random-access memory (RAM).
 - Support for labels to organize jumps and loops.
 
-## Features
+## ⚙️ Features
 - **Instruction Set**: Supports arithmetic operations, input/output operations, conditional and unconditional jumps, subroutine calls, and returns.
 - **Registers**: Provides 8 general-purpose registers (`ax`, `bx`, `cx`, `dx`, `ex`, `fx`, `gx`, `hx`).
 - **Memory**: Includes RAM for data storage.
@@ -61,14 +61,14 @@ proc/
 ├── myLib/...
 ```
 
-## Processor Commands
+## ✨ Processor Commands
 - Arithmetic Operations: add, sub, mul, div, sqrt, sin, cos, tg, ctg.
 - Input/Output: in, out.
 - Flow Control: jmp, ja, jb, jae, jbe, je, jhe, call, ret, hlt.
 - Stack Operations: push, pop.
 - Debugging: dump, sdump.
 
-## Example Assembly Code
+## 💡 Example Assembly Code
 This program counts the factorial of a positive integer:
 Еnter, for example, the number 5
 <div align="center">
