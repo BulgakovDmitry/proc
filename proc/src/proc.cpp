@@ -104,6 +104,7 @@ int run(SPU* spu, size_t sizeFile)
             case COMMAND_IN:
             {
                 double a = 0;
+                printf("%sIN%s: %s", GREEN, RED, RESET);
                 scanf("%lg", &a);
                 stackPush(&spu->stk, a);
                 spu->ip++;

@@ -11,6 +11,5 @@ int main(void)
 
     run(spu, spu->codeFileSize);
     spuDelete(spu);
-    DBG(SUCCESS);
     return 0;
 }

@@ -14,10 +14,12 @@ static void workWithReg(Asm* asem, int* shift, int arg);
 static void addLabel   (Asm* asem, char command_recognizer[], size_t len);
 static bool searchLabel(Asm* asem, char* buffer, char argument_recognizer[], int* shift, int t_1);
 
+static inline void skipSpaces(const char *buffer, int *shift);
+
 #define WORKING_WITH_THREE_ARGUMENT_COMMAND(constNameCommand)   \
     ((asem->code))[asem->ip] = constNameCommand;                \
     asem->ip++;                                                 \
-    shift += t_0 + SPACE;                                       \
+    shift += t_0; skipSpaces(buffer, &shift);                   \
     char argument_recognizer[LEN_REG] = "";                     \
     int t_1 = 0;                                                \
     sscanf(buffer + shift, "%s%n", argument_recognizer, &t_1);  \
@@ -28,7 +30,7 @@ static bool searchLabel(Asm* asem, char* buffer, char argument_recognizer[], int
     {                                                               \
         ((asem->code))[asem->ip] = constNameCommand;                \
         asem->ip++;                                                 \
-        shift += t_0 + SPACE;                                       \
+        shift += t_0; skipSpaces(buffer, &shift);                   \
         continue;                                                   \
     }
 
@@ -37,7 +39,7 @@ static bool searchLabel(Asm* asem, char* buffer, char argument_recognizer[], int
     {                                                                                 \
         ((asem->code))[asem->ip] = constNameCommand;                                  \
         asem->ip++;                                                                   \
-        shift += t_0 + SPACE;                                                         \
+        shift += t_0; skipSpaces(buffer, &shift);                                     \
         char argument_recognizer[MAX_LABEL_SIZE] = "";                                \
         int t_1 = 0;                                                                  \
         sscanf(buffer + shift, "%s%n", argument_recognizer, &t_1);                    \
@@ -45,7 +47,7 @@ static bool searchLabel(Asm* asem, char* buffer, char argument_recognizer[], int
         {                                                                             \
             asem->code[asem->ip] = atof(argument_recognizer);                         \
             asem->ip++;                                                               \
-            shift += t_1 + SPACE;                                                     \
+            shift += t_1; skipSpaces(buffer, &shift);                                 \
         }                                                                             \
         else                                                                          \
         {                                                                             \
@@ -55,6 +57,12 @@ static bool searchLabel(Asm* asem, char* buffer, char argument_recognizer[], int
         }                                                                             \
     } 
 
+static inline void skipSpaces(const char* buffer, int* shift)
+{
+    while (isspace((unsigned char)buffer[*shift]))
+        ++(*shift);
+}
+
 Asm* asmCtor(FILE* file)
 {
     Asm* asem = (Asm*)calloc(1, sizeof(Asm));
@@ -62,7 +70,7 @@ Asm* asmCtor(FILE* file)
 
     asem->asmFileSize = getFileSize(file);
 
-    asem->code = (double*)calloc(asem->asmFileSize + 1, sizeof(double));     // СОЗДАНИЕ МАССИВА code
+    asem->code = (double*)calloc(asem->asmFileSize + 1, sizeof(double));  
     assert(asem->code);
     asem->code[asem->asmFileSize] = '\0';
 
@@ -101,7 +109,7 @@ void asembler(Asm* asem, FILE* assembler)
     assert(asem);
     assert(assembler);
     
-    char* buffer = readFileToBuffer(assembler);          // СОЗДАНИЕ БУФФЕРА
+    char* buffer = readFileToBuffer(assembler);      
     assert(buffer);
 
     char command_recognizer[10] = "";
@@ -154,12 +162,12 @@ void asembler(Asm* asem, FILE* assembler)
             } 
         }
 
-        else if (strncmp(command_recognizer, "hlt", 3) == 0)       \
-        {                                                          \
-            ((asem->code))[asem->ip] = COMMAND_HLT;                \
-            asem->ip++;                                            \
-            shift += t_0 + SPACE;                                  \
-            continue;                                              \
+        else if (strncmp(command_recognizer, "hlt", 3) == 0)       
+        {                                                          
+            ((asem->code))[asem->ip] = COMMAND_HLT;                
+            asem->ip++;                                            
+            shift += t_0; skipSpaces(buffer, &shift);              
+            continue;                                              
         }
         
         JUMP_TYPE_COMMAND("call", COMMAND_CALL)
@@ -189,7 +197,8 @@ void asembler(Asm* asem, FILE* assembler)
         else
         { 
             size_t len = strlen(command_recognizer); 
-            shift += (int)len;                           
+            shift += (int)len; 
+            skipSpaces(buffer, &shift);                          
             continue;
         }
     } 

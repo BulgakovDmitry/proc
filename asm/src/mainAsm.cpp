@@ -20,6 +20,5 @@ int main()
     FCLOSE(asmCodeFile);
     FCLOSE(assembler);
 
-    DBG(SUCCESS);
     return 0;
 }
